@@ -41,7 +41,7 @@ DWORD WINAPI RcWsThread(PVOID param);
 DWORD WINAPI RsWcThread(PVOID param);
 
 struct arguments {
-	BOOL mode; // 0 mailslot; 1 socket
+	BOOL mode; // 0 namedpipe; 1 socket
 	WCHAR *namedpipename;
 	WCHAR *ip;
 	WCHAR *port;
