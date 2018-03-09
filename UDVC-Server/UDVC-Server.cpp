@@ -41,7 +41,7 @@ DWORD WINAPI RcWsThread(PVOID param);
 DWORD WINAPI RsWcThread(PVOID param);
 
 struct arguments {
-	BOOL mode; // 0 namedpipe; 1 socket
+	DWORD mode; // 0 socket; 1 namedpiep
 	WCHAR *namedpipename;
 	WCHAR *ip;
 	WCHAR *port;
@@ -92,7 +92,7 @@ BOOL parse_argv(INT argc, __in_ecount(argc) WCHAR **argv)
 				usage(argv[0]);
 				return FALSE;
 			case 'm':
-				running_args.mode = TRUE;
+				running_args.mode = 1;
 				break;
 			case 'n':
 				num++;
@@ -107,7 +107,7 @@ BOOL parse_argv(INT argc, __in_ecount(argc) WCHAR **argv)
 				break;
 
 			case 's':
-				running_args.mode = FALSE;
+				running_args.mode = 0;
 				break;
 			case 'p':
 				num++;
@@ -176,7 +176,7 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 	sessionId = GetCurrentSessionId();
 	wsprintf(tempnamepipename, L"\\\\.\\pipe\\UDVC_%08X", sessionId);
 
-	running_args.mode = FALSE;
+	running_args.mode = 0;
 	running_args.port = L"31337";
 	running_args.priority = 4;
 	running_args.namedpipename = tempnamepipename;
@@ -194,7 +194,7 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 		return -1;
 	}
 
-	if (!running_args.mode)
+	if (running_args.mode == 0)
 	{
 		wprintf(L"[*] Setting up socket\n");
 		if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
@@ -260,7 +260,7 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 		}
 		threadhandle.sock = c;
 	}
-	else
+	if (running_args.mode == 1)
 	{
 		wprintf(L"[*] Setting up named pipe\n");
 
