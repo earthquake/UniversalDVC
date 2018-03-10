@@ -57,7 +57,8 @@ struct threadhandles {
 VOID usage(WCHAR *cmdname)
 {
 	wprintf(L"Usage: %s [-s [-p port [-h ip]] | -m [-n name]] [-0 | -1 | -2 | -3]\n"
-		"Socket mode -s (default):\n"
+		"Socket server mode -s (default) or\n"
+		"Socket client mode -c:\n"
 		"\t-p port\t  port to bind the listener\n"
 		"\t-i ip\t  ip to bind the listener (default: 127.0.0.1)\n\n"
 		"Named pipe mode -m:\n"
@@ -91,8 +92,11 @@ BOOL parse_argv(INT argc, __in_ecount(argc) WCHAR **argv)
 			case 'h':
 				usage(argv[0]);
 				return FALSE;
-			case 'm':
+			case 'c':
 				running_args.mode = 1;
+				break;
+			case 'm':
+				running_args.mode = 2;
 				break;
 			case 'n':
 				num++;
@@ -196,7 +200,7 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 
 	if (running_args.mode == 0)
 	{
-		wprintf(L"[*] Setting up socket\n");
+		wprintf(L"[*] Setting up server socket\n");
 		if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
 		{ 
 			wprintf(L"[-] WSAStartup() failed with error: %d\n", ret);
@@ -261,6 +265,55 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 		threadhandle.sock = c;
 	}
 	if (running_args.mode == 1)
+	{
+		wprintf(L"[*] Setting up client socket\n");
+		if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
+		{
+			wprintf(L"[-] WSAStartup() failed with error: %d\n", ret);
+			return -1;
+		}
+
+		ZeroMemory(&hints, sizeof(hints));
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+		hints.ai_protocol = IPPROTO_TCP;
+		hints.ai_flags = AI_PASSIVE;
+
+		if ((ret = GetAddrInfoW(running_args.ip, running_args.port, &hints, &result)) != 0) {
+			wprintf(L"[-] GetAddrInfoW() failed with error: %ld\n", ret);
+			WSACleanup();
+			return -1;
+		}
+
+		if ((c = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == INVALID_SOCKET) {
+			wprintf(L"[-] socket() failed with error: %ld\n", WSAGetLastError());
+			FreeAddrInfoW(result);
+			WSACleanup();
+			return -1;
+		}
+
+		if ((ret = connect(c, result->ai_addr, (int)result->ai_addrlen)) == SOCKET_ERROR) {
+			wprintf(L"[-] connect() failed with error: %ld\n", WSAGetLastError());
+			FreeAddrInfoW(result);
+			closesocket(c);
+			WSACleanup();
+			return -1;
+		}
+		FreeAddrInfoW(result);
+		wprintf(L"[*] Connected to: %s:%s\n", running_args.ip, running_args.port);
+
+		u_long blocking = 0;
+		ret = ioctlsocket(c, FIONBIO, &blocking);
+		if (ret != NO_ERROR)
+		{
+			wprintf(L"[-] ioctlsocket() failed with error: %ld\n", ret);
+			closesocket(c);
+			WSACleanup();
+			return -1;
+		}
+		threadhandle.sock = c;
+	}
+	if (running_args.mode == 2)
 	{
 		wprintf(L"[*] Setting up named pipe\n");
 
