@@ -203,7 +203,7 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 		wprintf(L"[*] Setting up server socket\n");
 		if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
 		{ 
-			wprintf(L"[-] WSAStartup() failed with error: %d\n", ret);
+			wprintf(L"[-] WSAStartup() failed with error: %ld\n", ret);
 			return -1;
 		}
 
@@ -269,7 +269,7 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 		wprintf(L"[*] Setting up client socket\n");
 		if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
 		{
-			wprintf(L"[-] WSAStartup() failed with error: %d\n", ret);
+			wprintf(L"[-] WSAStartup() failed with error: %ld\n", ret);
 			return -1;
 		}
 
