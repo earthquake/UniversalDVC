@@ -56,7 +56,7 @@ struct threadhandles {
 
 VOID usage(WCHAR *cmdname)
 {
-	wprintf(L"Usage: %s [-s [-p port [-h ip]] | -m [-n name]] [-0 | -1 | -2 | -3]\n"
+	wprintf(L"Usage: %s [-s | -c [-p port [-h ip]] | -m [-n name]] [-0 | -1 | -2 | -3]\n"
 		"Socket server mode -s (default) OR\n"
 		"Socket client mode -c:\n"
 		"\t-p port\t  port to bind the listener\n"
