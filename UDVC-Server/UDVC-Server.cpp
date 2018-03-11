@@ -90,6 +90,7 @@ BOOL parse_argv(INT argc, __in_ecount(argc) WCHAR **argv)
 		switch (argv[num][1])
 		{
 			case 'h':
+			case '?':
 				usage(argv[0]);
 				return FALSE;
 			case 'c':
