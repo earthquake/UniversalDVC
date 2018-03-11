@@ -1,0 +1,53 @@
+HKCR
+{
+	CLSID
+	{
+		UDVC-Plugin.UDVC-Plugin.1 = s 'UDVC-Plugin Class'
+		{
+			CLSID = s '{3C8458A3-2EBE-4840-BB07-3BA5BF810588}'
+		}
+		UDVC-Plugin.UDVC-Plugin = s 'UDVC-Plugin Class'
+		{
+			CLSID = s '{3C8458A3-2EBE-4840-BB07-3BA5BF810588}'
+			CurVer = s 'UDVC-Plugin.UDVC-Plugin.1'
+		}
+		ForceRemove {3C8458A3-2EBE-4840-BB07-3BA5BF810588} = s 'UDVC-Plugin Class'
+		{
+			ProgID = s 'UDVC-Plugin.UDVC-Plugin.1'
+			VersionIndependentProgID = s 'UDVC-Plugin.UDVC-Plugin'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Free'
+			}
+			'TypeLib' = s '{392B9DEE-7E00-4C58-831B-50C58EAA887F}'
+		}		
+	}		
+}
+
+HKCU
+{ 
+	Software
+	{
+		Microsoft
+		{
+			'Terminal Server Client'
+			{
+				Default
+				{
+					AddIns
+					{
+						UDVC-Plugin
+						{
+							val Name = s '{3C8458A3-2EBE-4840-BB07-3BA5BF810588}'
+							val namedpipename = s '\\.\pipe\UDVC_default'
+							val ip = s '127.0.0.1'
+							val port = s '31337'
+							val mode = d '0'
+						}
+					}
+				}
+			}
+		}
+	}
+}
