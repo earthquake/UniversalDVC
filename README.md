@@ -21,11 +21,11 @@ The *.exe* needs to be put on the RDP server and run as any user.
 
 ### Modes supported ###
 Both sides support three modes at the moment: 
-##### Socket server mode (0 - default)
+#### Socket server mode (0 - default)
 When this mode is enabled, then a listener will be set up on the defined port and interface (IP address).
-##### Socket client mode (1)
+#### Socket client mode (1)
 In this mode a connection will be made towards a listener on the defined IP address and port.
-##### Named Pipe mode (2)
+#### Named Pipe mode (2)
 This mode sets up a Named Pipe with the specified name. As an example: this mode can be used for other tools to do IPC communication over RDP. Unfortunately, Named Pipes are written to the disk so it is considered slow compared to the socket modes. **If you care about the bandwith, please use the socket modes.**
 
 ### Options/Configuration ###
