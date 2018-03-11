@@ -165,7 +165,6 @@ ULONG GetCurrentSessionId(void) {
 
 INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 {
-	DWORD	rc;
 	HANDLE	hFile;
 	WSADATA	wsaData;
 	ADDRINFOW *result = NULL;
@@ -193,9 +192,13 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 		if (!parse_argv(argc, argv))
 			return -1;
 
-	rc = OpenDynamicChannel(UDVC_CHANNEL_NAME, &hFile);
-	if (ERROR_SUCCESS != rc)
+	
+	if ((ret = OpenDynamicChannel(UDVC_CHANNEL_NAME, &hFile)) != ERROR_SUCCESS)
 	{
+		if (ret == 31)
+			wprintf(L"[-] Could not open Dynamic Virtual Channel, plugin was not loaded on the client side: %ld\n", ret);
+		else
+			wprintf(L"[-] Could not open Dynamic Virtual Channel: %ld\n", ret);
 		return -1;
 	}
 
