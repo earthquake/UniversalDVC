@@ -41,17 +41,17 @@ DWORD WINAPI RcWsThread(PVOID param);
 DWORD WINAPI RsWcThread(PVOID param);
 
 struct arguments {
-	DWORD mode; // 0 socket; 1 namedpiep
-	WCHAR *namedpipename;
-	WCHAR *ip;
-	WCHAR *port;
-	BYTE priority;
+	DWORD	mode; // 0 socket; 1 namedpiep
+	WCHAR	*namedpipename;
+	WCHAR	*ip;
+	WCHAR	*port;
+	BYTE	priority;
 } running_args;
 
 struct threadhandles {
-	HANDLE hRDP = NULL;
-	SOCKET sock = NULL;
-	HANDLE pipe = NULL;
+	HANDLE	hRDP = NULL;
+	SOCKET	sock = NULL;
+	HANDLE	pipe = NULL;
 };
 
 VOID usage(WCHAR *cmdname)
@@ -147,9 +147,9 @@ BOOL parse_argv(INT argc, __in_ecount(argc) WCHAR **argv)
 }
 
 ULONG GetCurrentSessionId(void) {
-	LPTSTR pBuf;
-	DWORD len;
-	ULONG ret;
+	LPTSTR	pBuf;
+	DWORD	len;
+	ULONG	ret;
 
 	if (!WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSSessionId, &pBuf, &len))
 	{
@@ -164,16 +164,16 @@ ULONG GetCurrentSessionId(void) {
 
 INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 {
-	DWORD rc;
-	HANDLE hFile;
-	WSADATA wsaData;
+	DWORD	rc;
+	HANDLE	hFile;
+	WSADATA	wsaData;
 	ADDRINFOW *result = NULL;
 	ADDRINFOW hints;
-	SOCKET s, c;
-	WCHAR tempnamepipename[24];
-	HANDLE hNamedPipe = NULL;
-	int ret;
-	ULONG sessionId;
+	SOCKET	s, c;
+	WCHAR	tempnamepipename[24];
+	HANDLE	hNamedPipe = NULL;
+	ULONG	sessionId;
+	int		ret;
 
 	struct threadhandles threadhandle;
 
@@ -389,16 +389,14 @@ INT _cdecl wmain(INT argc, __in_ecount(argc) WCHAR **argv)
 *  Open a dynamic channel with the name given in szChannelName.
 *  The output file handle can be used in ReadFile/WriteFile calls.
 */
-DWORD OpenDynamicChannel(
-	LPCSTR szChannelName,
-	HANDLE *phFile)
+DWORD OpenDynamicChannel(LPCSTR szChannelName, HANDLE *phFile)
 {
-	HANDLE hWTSHandle = NULL;
-	HANDLE hWTSFileHandle;
-	PVOID vcFileHandlePtr = NULL;
-	DWORD len;
-	DWORD rc = ERROR_SUCCESS;
-	BOOL fSucc;
+	HANDLE	hWTSHandle = NULL;
+	HANDLE	hWTSFileHandle;
+	PVOID	vcFileHandlePtr = NULL;
+	DWORD	len;
+	DWORD	rc = ERROR_SUCCESS;
+	BOOL	fSucc;
 
 	hWTSHandle = WTSVirtualChannelOpenEx(WTS_CURRENT_SESSION, (LPSTR)szChannelName,
 		WTS_CHANNEL_OPTION_DYNAMIC);
@@ -453,17 +451,17 @@ exitpt:
  */
 DWORD WINAPI RsWcThread(PVOID param)
 {
-	threadhandles *handles = (threadhandles *)param;
+	struct threadhandles *handles = (struct threadhandles *)param;
 	DWORD   dwWritten;
 	DWORD	dw;
 	BOOL    bSucc;
 	HANDLE  hEvent_rdp, hEvent_pipe;
-	char *readBuf;
-	DWORD heapsize = 4096;
+	char	*readBuf;
+	DWORD	heapsize = 4096;
 
 	if ((readBuf = (char *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, heapsize)) == NULL)
 	{
-		wprintf(L"[-] Error allocating heap for read buffer %ld", GetLastError());
+		wprintf(L"[-] Error allocating heap for read buffer %ld\n", GetLastError());
 		return -1;
 	}
 
@@ -504,7 +502,7 @@ DWORD WINAPI RsWcThread(PVOID param)
 
 			if (ResetEvent(Overlapped_pipe.hEvent) == FALSE)
 			{
-				wprintf(L"[-] [RsWc] ResetEvent() failed with error = %d\n", GetLastError());
+				wprintf(L"[-] [RsWc] ResetEvent() failed with error = %ld\n", GetLastError());
 				return -1;
 			}
 		}
@@ -533,7 +531,7 @@ DWORD WINAPI RsWcThread(PVOID param)
  */
 DWORD WINAPI RcWsThread(PVOID param)
 {
-	threadhandles *handles = (threadhandles *)param;
+	struct threadhandles *handles = (struct threadhandles *)param;
 	BYTE        ReadBuffer[CHANNEL_PDU_LENGTH];
 	CHANNEL_PDU_HEADER *pHdr = (CHANNEL_PDU_HEADER *)ReadBuffer;
 	PBYTE		pData;
@@ -569,7 +567,7 @@ DWORD WINAPI RcWsThread(PVOID param)
 
 		if ((ret = ResetEvent(Overlapped.hEvent)) == FALSE)
 		{
-			wprintf(L"[-] [RcWs] ResetEvent() failed with error = %d\n", GetLastError());
+			wprintf(L"[-] [RcWs] ResetEvent() failed with error = %ld\n", GetLastError());
 			return -1;
 		}
 
