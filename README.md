@@ -44,7 +44,7 @@ Universal Dynamic Virtual Channel server application
 Usage: C:\Users\UDVC\UDVC-Server.exe [-s | -c [-p port [-h ip]] | -m [-n name]] [-0 | -1 | -2 | -3]
 Socket server mode -s (default) OR
 Socket client mode -c:
-        -p port   port to bind the listener
+        -p port   port to bind the listener (default: 31337)
         -i ip     ip to bind the listener (default: 127.0.0.1)
 
 Named pipe mode -m:
