@@ -13,9 +13,14 @@ If you want to know more details, please scroll down.
 You can grab the whole project and compile it by yourself or just use the compiled binaries from the [Releases section](https://github.com/earthquake/UniversalDVC/releases). It is important that the correct binary is used in all cases, please select the correct one for the corresponding architecture (if your client is 32bit but the server is 64bit then grab the 32bit dll and 64bit exe).
 The *.dll* needs to be placed on the client computer in any directory (for long-term use, you can put it into the %SYSROOT%\\system32\\ or %SYSROOT%\\SysWoW64\\) and install it with the following command as an elevated user (a.k.a Administrator): 
 `regsvr32.exe UDVC-Plugin.dll`
+If your user is not an administrator, you need to import the registry settings under your user too. Please use the *UDVC-Plugin.reg* file for that.
+
 If you wish to remove it: 
 `regsvr32.exe /u UDVC-Plugin.dll`
+
+
 **Every time you connect to an RDP server from now on, this plugin will be loaded and will configure itself as it was specified in the registry (see below).**
+
 
 The *.exe* needs to be put on the RDP server and run as any user.
 
@@ -30,6 +35,7 @@ This mode sets up a Named Pipe with the specified name. As an example: this mode
 
 ### Options/Configuration ###
 Both the client and the server binary act the same way and it can be configured with the same options.
+* **enabled**: *0* disabled, *1* enabled (plugin only). By default it is enabled and will tell you in a messagebox every time you initiate a connection.
 * **mode**: *0* for listen(), *1* for connect() and *2* for creating a Named Pipe
 * **ip**: which UP to connect to or bind to
 * **port**: which port to connect to or bind to
