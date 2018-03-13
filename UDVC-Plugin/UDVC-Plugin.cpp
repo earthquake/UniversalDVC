@@ -296,11 +296,11 @@ HRESULT UDVCPlugin::Initialize(__in IWTSVirtualChannelManager *pChannelMgr)
 	}
 
 	if (running_args.mode == 0)
-		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. It is going to listen on: %s:%s", running_args.ip, running_args.port);
+		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. When the server binary gets executed, it will listen on: %s:%s", running_args.ip, running_args.port);
 	if (running_args.mode == 1)
-		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. It is going to connect to: %s:%s", running_args.ip, running_args.port);
+		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. When the server binary gets executed, it will connect to: %s:%s", running_args.ip, running_args.port);
 	if (running_args.mode == 2)
-		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. It is going to listen on: %s", running_args.namedpipename);
+		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. When the server binary gets executed, it will listen on: %s", running_args.namedpipename);
 
 	MessageBox(NULL, enabledmsg, L"UDVC plugin is enabled", MB_OK | MB_ICONWARNING);
 
