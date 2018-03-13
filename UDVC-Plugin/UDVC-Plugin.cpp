@@ -31,7 +31,8 @@
 #define UDVC_CHANNEL_NAME "UniversalDVC"
 
 struct arguments {
-	DWORD mode; // 0 sock; 1 namedpipe
+	DWORD enabled;
+	DWORD mode; // 0 sock listen(); 1 sock connect(); 2 namedpipe
 	WCHAR *namedpipename;
 	WCHAR *ip;
 	WCHAR *port;
@@ -215,10 +216,11 @@ BOOL UDVCPlugin::GetRegistrySettings()
 
 	if ((lRes = RegOpenKeyEx(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Terminal Server Client\\Default\\AddIns\\UDVC-Plugin\\", 0, KEY_READ, &hKey)) != ERROR_SUCCESS)
 	{
-		DebugPrint(lRes, L"Error opening registry hive/key");
+		DebugPrint(lRes, L"[-] Error opening registry hive/key");
 		return FALSE;
 	}
 
+	GetDWORDRegKey(hKey, L"enabled", &running_args.enabled);
 	GetDWORDRegKey(hKey, L"mode", &(running_args.mode));
 	if ((running_args.mode == 0) || (running_args.mode == 1))
 	{
@@ -262,7 +264,7 @@ BOOL UDVCPlugin::GetRegistrySettings()
 			}
 		}
 	}
-
+	
 	return TRUE;
 }
 
@@ -270,10 +272,38 @@ BOOL UDVCPlugin::GetRegistrySettings()
 // IWTSPlugin::Initialize implementation.
 HRESULT UDVCPlugin::Initialize(__in IWTSVirtualChannelManager *pChannelMgr)
 {
-	HRESULT hr;
+	HRESULT	hr;
 	CComObject<UDVCPlugin> *pListenerCallback;
 	CComPtr<UDVCPlugin> ptrListenerCallback;
 	CComPtr<IWTSListener> ptrListener;
+	WCHAR	enabledmsg[256];
+
+	running_args.enabled = 0;
+	running_args.mode = 0;
+	running_args.port = L"31337";
+	running_args.namedpipename = L"\\\\.\\pipe\\UDVC_default";
+	running_args.ip = L"127.0.0.1";
+
+	if (!GetRegistrySettings())
+	{
+		DebugPrint(-1, L"[-] Could not access the registry settings");
+	}
+
+	if (!running_args.enabled)
+	{
+		DebugPrint(0, L"[*] Plugin disabled");
+		return -1;
+	}
+
+	if (running_args.mode == 0)
+		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. It is going to listen on: %s:%s", running_args.ip, running_args.port);
+	if (running_args.mode == 1)
+		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. It is going to connect to: %s:%s", running_args.ip, running_args.port);
+	if (running_args.mode == 2)
+		wnsprintf(enabledmsg, 255, L"The UDVC plugin is enabled. It is going to listen on: %s", running_args.namedpipename);
+
+	MessageBox(NULL, enabledmsg, L"UDVC plugin is enabled", MB_OK | MB_ICONWARNING);
+
 
 	// Create an instance of the CSampleListenerCallback object.
 	hr = CComObject<UDVCPlugin>::CreateInstance(&pListenerCallback);
@@ -532,6 +562,7 @@ HRESULT UDVCPlugin::OnNewChannelConnection(__in IWTSVirtualChannel *pChannel,
 	ta.threadhandle = &threadhandle;
 	ta.m_ptrChannel = pChannel;
 
+	running_args.enabled = 0;
 	running_args.mode = 0;
 	running_args.port = L"31337";
 	running_args.namedpipename = L"\\\\.\\pipe\\UDVC_default";
@@ -539,7 +570,7 @@ HRESULT UDVCPlugin::OnNewChannelConnection(__in IWTSVirtualChannel *pChannel,
 
 	if (!GetRegistrySettings())
 	{
-		DebugPrint(-1, L"Could not access the registry settings");
+		DebugPrint(-1, L"[-] Could not access the registry settings");
 	}
 
 	HANDLE hListenerThread = CreateThread(
