@@ -40,6 +40,7 @@ struct arguments {
 
 struct threadhandles {
 	SOCKET sock = NULL;
+	SOCKET sockserver = NULL;
 	HANDLE pipe = NULL;
 };
 
@@ -47,6 +48,7 @@ struct threadargs {
 	struct arguments *running_args;
 	struct threadhandles *threadhandle;
 	IWTSVirtualChannel *m_ptrChannel = NULL;
+	HANDLE hThread = NULL;
 };
 
 using namespace ATL;
@@ -110,6 +112,11 @@ public:
 	
 	HRESULT STDMETHODCALLTYPE OnClose()
 	{
+		DebugPrint(0, L"[*] Terminating thread, closing socket and channel");
+		if (pta->threadhandle->sockserver)
+			closesocket(pta->threadhandle->sockserver);
+		WSACleanup();
+		TerminateThread(pta->hThread, 0);
 		return m_ptrChannel->Close();
 	}
 
@@ -364,6 +371,7 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 			WSACleanup();
 			return -1;
 		}
+		threadarg->threadhandle->sockserver = s;
 
 		if ((ret = bind(s, result->ai_addr, (int)result->ai_addrlen)) == SOCKET_ERROR) {
 			DebugPrint(WSAGetLastError(), L"[-] bind() failed with error: %ld", WSAGetLastError());
@@ -392,6 +400,7 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 		DebugPrint(0, L"[+] Client connected");
 
 		closesocket(s);
+		threadarg->threadhandle->sockserver = NULL;
 
 		ret = ioctlsocket(c, FIONBIO, &blocking);
 		if (ret != NO_ERROR)
@@ -580,6 +589,8 @@ HRESULT UDVCPlugin::OnNewChannelConnection(__in IWTSVirtualChannel *pChannel,
 		&ta,
 		0,
 		&dwThreadId);
+
+	ta.hThread = hListenerThread;
 
 	*ppCallback = ptrCallback;
 	(*ppCallback)->AddRef();
