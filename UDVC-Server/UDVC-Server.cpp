@@ -403,7 +403,7 @@ DWORD OpenDynamicChannel(LPCSTR szChannelName, HANDLE *phFile)
 	BOOL	fSucc;
 
 	hWTSHandle = WTSVirtualChannelOpenEx(WTS_CURRENT_SESSION, (LPSTR)szChannelName,
-		WTS_CHANNEL_OPTION_DYNAMIC);
+		WTS_CHANNEL_OPTION_DYNAMIC | running_args.priority);
 	if (NULL == hWTSHandle)
 	{
 		rc = GetLastError();
