@@ -66,9 +66,25 @@ Data transfer priority parameters:
 
 The client *.dll*  reads all the options from the registry, the values can be found under the following key:
 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Terminal Server Client\Default\AddIns\UDVC-Plugin`
+  
+Every time the module is enabled and before the connection is made a reminder warning is showed. Just like this:
+![warning](https://github.com/earthquake/UniversalDVC/blob/master/wiki/warning.png?raw=true)
+This warning ensures that the user knows about the plugin is loaded and with what settings.
 
 ### Usage
 The listeners, connections or named pipes are only created when the server executable was able to connect to the plugin dll. It depends on your configuration, but by default when the Virtual Channel connection was made (the plugin was loaded properly, the server binary was executed) it listens on the localhost:31337 on both endpoints. When you connect to these ports and send data through the socket, it will show up on the other side.
+
+### Example use cases
+Just to show a few uses cases where this tool can be used.
+
+Very basic port forwarding. The Segregated 1 machine has a HTTP service on tcp/80. That network is not routed from the 192.168.0.0/24 network, the dual homed jump box must be used to access. Listen mode is configured on the client side on 0.0.0.0:31337 and the server binary was executed with the connect mode settings to create a connection to the web server. The user on the RDP client can use its browser to open http://127.0.0.1:31337 to access the content from http://10.13.37.2:80.
+![scenario1](https://github.com/earthquake/UniversalDVC/blob/master/wiki/scenario1.png?raw=true)
+
+A bit more advanced scenario to transfer files. Both endpoints are configured to listen on 0.0.0.0:31337. First the Hacking box connects to the RDP client and waits for the input. Then the Segregated 2 machine connects to the Jump box and reads the whole file into the socket.
+![scenario2](https://github.com/earthquake/UniversalDVC/blob/master/wiki/scenario2.png?raw=true)
+
+As an extra, Named Pipes can be used as well. In this case both the RDP client and Jump box create a Named Pipe on both sides (hIPC-client and hIPC-server) and the other machines can connect to these pipes. Whatever is written on the pipes it will show up on the other end. It is not really different from the listen mode example above, except it is using Named Pipes instead of TCP sockets.
+![scenario3](https://github.com/earthquake/UniversalDVC/blob/master/wiki/scenario3.png?raw=true)
 
 ### Issues
 In case the plugin does not load or the executable does not run because it is missing some DLLs for example the VCRUNTIME140.DLL, you might want to install the [Visual C++ Redistributable for Visual Studio 2015](https://www.microsoft.com/en-us/download/details.aspx?id=48145) package.
