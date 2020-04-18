@@ -38,7 +38,7 @@ This mode sets up a Named Pipe with the specified name. As an example: this mode
 Both the client and the server binary act the same way and it can be configured with the same options.
 * **enabled**: *0* disabled, *1* enabled (plugin only). By default it is enabled and will tell you in a messagebox every time you initiate a connection.
 * **mode**: *0* for listen(), *1* for connect() and *2* for creating a Named Pipe
-* **ip**: which UP to connect to or bind to
+* **ip**: which IP to connect to or bind to
 * **port**: which port to connect to or bind to
 * **namedpipename**: name of the named pipe
 * **priority** (server binary only) *LOW, MEDIUM, HIGH, REAL* priorities for data transmission. *REAL* priority could severely affect the accessibility of the session in case of an intense data transfer, since the protocol prioritizes data over the control. 
