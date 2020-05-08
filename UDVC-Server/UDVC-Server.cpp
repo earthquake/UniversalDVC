@@ -54,6 +54,8 @@ struct threadhandles {
 	HANDLE	pipe = NULL;
 };
 
+HANDLE      hEvent_RDP_global;
+
 VOID usage(WCHAR *cmdname)
 {
 	wprintf(L"Usage: %s [-s | -c [-p port [-i ip]] | -m [-n name]] [-0 | -1 | -2 | -3]\n"
@@ -481,9 +483,16 @@ DWORD WINAPI RsWcThread(PVOID param)
 	{	
 		if (handles->sock)
 		{
-			if ((dw = recv(handles->sock, readBuf, heapsize, 0)) == 0)
+			if ((dw = recv(handles->sock, readBuf, heapsize, 0)) == SOCKET_ERROR)
 			{
 				wprintf(L"[-] [RsWc] recv() failed with error %d, exiting thread...\n", WSAGetLastError());
+				SetEvent(hEvent_RDP_global);
+				return -1;
+			}
+			if (dw == 0)
+			{
+				wprintf(L"[-] [RsWc] socket closed, exiting thread...\n", WSAGetLastError());
+				SetEvent(hEvent_RDP_global);
 				return -1;
 			}
 		}
@@ -541,15 +550,14 @@ DWORD WINAPI RcWsThread(PVOID param)
 	PBYTE		pData;
 	DWORD       dwRead, ret, Flags, dw;
 	BOOL        bSucc;
-	HANDLE      hEvent;
 	char		*bufWrite;
 	DWORD		bufWritelen;
 
-	hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	hEvent_RDP_global = CreateEvent(NULL, FALSE, FALSE, NULL);
 	OVERLAPPED  Overlapped = { 0 };
 	DWORD TotalRead = 0;
 
-	Overlapped.hEvent = hEvent;
+	Overlapped.hEvent = hEvent_RDP_global;
 	while (TRUE)
 	{
 		bSucc = ReadFile(handles->hRDP, ReadBuffer, sizeof(ReadBuffer), &dwRead, &Overlapped);
@@ -566,14 +574,18 @@ DWORD WINAPI RcWsThread(PVOID param)
 		if (!bSucc)
 		{
 			wprintf(L"[-] [RcWs] ReadFile()/WaitForSingleObject() error: %ld\n", GetLastError());
+			if (handles->sock)
+				closesocket(handles->sock);
 			return -1;
 		}
 
+		/*
+		// Event was created with bManualReset FALSE, no need to reset it.
 		if ((ret = ResetEvent(Overlapped.hEvent)) == FALSE)
 		{
 			wprintf(L"[-] [RcWs] ResetEvent() failed with error = %ld\n", GetLastError());
 			return -1;
-		}
+		}*/
 
 		// no need to pass the header.
 		bufWrite = (char *)(pHdr + 1);
