@@ -69,6 +69,7 @@ The client *.dll*  reads all the options from the registry, the values can be fo
   
 Every time the module is enabled and before the connection is made a reminder warning is showed. Just like this:
 ![warning](https://github.com/earthquake/UniversalDVC/blob/master/wiki/warning.png?raw=true)
+
 This warning ensures that the user knows about the plugin is loaded and with what settings.
 
 ### Usage
