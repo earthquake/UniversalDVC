@@ -616,6 +616,7 @@ HRESULT STDMETHODCALLTYPE UDVCPlugin::OnDataReceived(ULONG cbSize, __in_bcount(c
 		if ((ret = send(pta->threadhandle->sock, (char *)pBuffer, cbSize, 0)) == SOCKET_ERROR)
 		{
 			DebugPrint(WSAGetLastError(), L"[-] [RsWc] send() failed with error %ld", WSAGetLastError());
+			m_ptrChannel->Close();
 			return -1;
 		}
 	}
@@ -633,6 +634,7 @@ HRESULT STDMETHODCALLTYPE UDVCPlugin::OnDataReceived(ULONG cbSize, __in_bcount(c
 		if (!bSucc)
 		{
 			DebugPrint(GetLastError(), L"[-] [RsWc] WriteFile()/WaitForSingleObject() error: %ld", GetLastError());
+			m_ptrChannel->Close();
 			return -1;
 		}
 	}
