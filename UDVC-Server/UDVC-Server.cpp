@@ -59,10 +59,13 @@ HANDLE      hEvent_RDP_global;
 VOID usage(WCHAR *cmdname)
 {
 	wprintf(L"Usage: %s [-s | -c [-p port [-i ip]] | -m [-n name]] [-0 | -1 | -2 | -3]\n"
-		"Socket server mode -s (default) OR\n"
-		"Socket client mode -c:\n"
+		"Socket server mode -s (default)\n"
 		"\t-p port\t  port to bind the listener (default: 31337)\n"
 		"\t-i ip\t  ip to bind the listener (default: 127.0.0.1)\n\n"
+		"OR \n"
+		"Socket client mode -c:\n"
+		"\t-p port\t  port to connect to\n"
+		"\t-i ip\t  ip to connect to\n\n"
 		"Named pipe mode -m:\n"
 		"\t-n name\t  name of the named pipe (by default: \"\\\\.\\pipe\\UDVC_{RDP SESSION NUMBER}\")\n\n"
 		"Data transfer priority parameters:\n"
