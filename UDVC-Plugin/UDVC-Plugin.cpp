@@ -1,7 +1,7 @@
 /*
 * MIT License
 *
-* Copyright(c) 2018 Balazs Bucsay
+* Copyright(c) 2018-2020 Balazs Bucsay
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files(the "Software"), to deal
@@ -51,6 +51,8 @@ struct threadargs {
 	HANDLE hThread = NULL;
 };
 
+WSADATA		wsaData;
+
 using namespace ATL;
 
 #define CHECK_QUIT_HR( _x_ )    if(FAILED(hr)) { return hr; }
@@ -95,6 +97,7 @@ public:
 	HRESULT STDMETHODCALLTYPE Disconnected(DWORD dwDisconnectCode)
 	{
 		// Prevent C4100 "unreferenced parameter" warnings.
+		WSACleanup();
 		dwDisconnectCode;
 		return S_OK;
 	}
@@ -115,9 +118,8 @@ public:
 		DebugPrint(0, L"[*] Terminating thread, closing socket and channel");
 		if (pta->threadhandle->sockserver)
 			closesocket(pta->threadhandle->sockserver);
-		WSACleanup();
 		TerminateThread(pta->hThread, 0);
-		return m_ptrChannel->Close();
+		return S_OK;// m_ptrChannel->Close();
 	}
 
 	HRESULT STDMETHODCALLTYPE
@@ -284,6 +286,7 @@ HRESULT UDVCPlugin::Initialize(__in IWTSVirtualChannelManager *pChannelMgr)
 	CComPtr<UDVCPlugin> ptrListenerCallback;
 	CComPtr<IWTSListener> ptrListener;
 	WCHAR	enabledmsg[256];
+	int		ret;
 
 	running_args.enabled = 0;
 	running_args.mode = 0;
@@ -299,6 +302,12 @@ HRESULT UDVCPlugin::Initialize(__in IWTSVirtualChannelManager *pChannelMgr)
 	if (!running_args.enabled)
 	{
 		DebugPrint(0, L"[*] Plugin disabled");
+		return -1;
+	}
+
+	if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
+	{
+		DebugPrint(ret, L"WSAStartup() failed with error: %ld", ret);
 		return -1;
 	}
 
@@ -336,7 +345,6 @@ HRESULT STDMETHODCALLTYPE UDVCPlugin::Connected()
 DWORD UDVCPlugin::ListenerThread(PVOID param)
 {
 	struct threadargs *threadarg = (struct threadargs *)param;
-	WSADATA		wsaData;
 	ADDRINFOW	*result = NULL;
 	ADDRINFOW	hints;
 	SOCKET		s, c;
@@ -347,11 +355,6 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 	if (threadarg->running_args->mode == 0)
 	{
 		DebugPrint(0, L"[*] Setting up server socket");
-		if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
-		{
-			DebugPrint(ret, L"WSAStartup() failed with error: %ld", ret);
-			return -1;
-		}
 
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_INET;
@@ -361,14 +364,12 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 
 		if ((ret = GetAddrInfoW(threadarg->running_args->ip, threadarg->running_args->port, &hints, &result)) != 0) {
 			DebugPrint(ret, L"[-] GetAddrInfoW() failed with error: %ld", ret);
-			WSACleanup();
 			return -1;
 		}
 
 		if ((s = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == INVALID_SOCKET) {
 			DebugPrint(WSAGetLastError(), L"[-] socket() failed with error: %ld", WSAGetLastError());
 			FreeAddrInfoW(result);
-			WSACleanup();
 			return -1;
 		}
 		threadarg->threadhandle->sockserver = s;
@@ -377,7 +378,6 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 			DebugPrint(WSAGetLastError(), L"[-] bind() failed with error: %ld", WSAGetLastError());
 			FreeAddrInfoW(result);
 			closesocket(s);
-			WSACleanup();
 			return -1;
 		}
 
@@ -387,14 +387,12 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 		if ((ret = listen(s, SOMAXCONN)) == SOCKET_ERROR) {
 			DebugPrint(WSAGetLastError(), L"[-] listen() failed with error: %ld", WSAGetLastError());
 			closesocket(s);
-			WSACleanup();
 			return -1;
 		}
 
 		if ((c = accept(s, NULL, NULL)) == INVALID_SOCKET) {
 			DebugPrint(WSAGetLastError(), L"[-] accept() failed with error: %ld", WSAGetLastError());
 			closesocket(s);
-			WSACleanup();
 			return -1;
 		}
 		DebugPrint(0, L"[+] Client connected");
@@ -407,7 +405,6 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 		{
 			DebugPrint(ret, L"[-] ioctlsocket() failed with error: %ld", ret);
 			closesocket(c);
-			WSACleanup();
 			return -1;
 		}
 		threadarg->threadhandle->sock = c;
@@ -415,11 +412,6 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 	if (threadarg->running_args->mode == 1)
 	{
 		DebugPrint(0, L"[*] Setting up client socket");
-		if ((ret = WSAStartup(MAKEWORD(2, 2), &wsaData)) != 0)
-		{
-			DebugPrint(ret, L"[-] WSAStartup() failed with error: %ld", ret);
-			return -1;
-		}
 
 		ZeroMemory(&hints, sizeof(hints));
 		hints.ai_family = AF_INET;
@@ -429,14 +421,12 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 
 		if ((ret = GetAddrInfoW(threadarg->running_args->ip, threadarg->running_args->port, &hints, &result)) != 0) {
 			DebugPrint(ret, L"[-] GetAddrInfoW() failed with error: %ld", ret);
-			WSACleanup();
 			return -1;
 		}
 
 		if ((c = socket(result->ai_family, result->ai_socktype, result->ai_protocol)) == INVALID_SOCKET) {
 			DebugPrint(WSAGetLastError(), L"[-] socket() failed with error: %ld", WSAGetLastError());
 			FreeAddrInfoW(result);
-			WSACleanup();
 			return -1;
 		}
 
@@ -444,7 +434,6 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 			DebugPrint(WSAGetLastError(), L"[-] connect() failed with error: %ld", WSAGetLastError());
 			FreeAddrInfoW(result);
 			closesocket(c);
-			WSACleanup();
 			return -1;
 		}
 		FreeAddrInfoW(result);
@@ -455,7 +444,6 @@ DWORD UDVCPlugin::ListenerThread(PVOID param)
 		{
 			DebugPrint(ret, L"[-] ioctlsocket() failed with error: %ld", ret);
 			closesocket(c);
-			WSACleanup();
 			return -1;
 		}
 		threadarg->threadhandle->sock = c;
@@ -510,9 +498,14 @@ DWORD WINAPI UDVCPlugin::RsWcThread(PVOID param)
 	{
 		if (threadarg->threadhandle->sock)
 		{
-			if ((dw = recv(threadarg->threadhandle->sock, (char *)readBuf, heapsize, 0)) == 0)
+			if ((dw = recv(threadarg->threadhandle->sock, (char *)readBuf, heapsize, 0)) == INVALID_SOCKET)
 			{
 				DebugPrint(WSAGetLastError(), L"[-] [RsWc] recv() failed with error %d, exiting thread...\n", WSAGetLastError());
+				return -1;
+			}
+			if (dw == 0)
+			{
+				DebugPrint(WSAGetLastError(), L"[-] [RsWc] socket closed, exiting thread...\n", WSAGetLastError());
 				return -1;
 			}
 		}
@@ -542,6 +535,8 @@ DWORD WINAPI UDVCPlugin::RsWcThread(PVOID param)
 
 		if (threadarg->m_ptrChannel != NULL)
 			threadarg->m_ptrChannel->Write(dw, readBuf, NULL);
+		else
+			return -1;
 	}
 
 	return 0;

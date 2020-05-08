@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright(c) 2018 Balazs Bucsay
+ * Copyright(c) 2018-2020 Balazs Bucsay
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files(the "Software"), to deal
@@ -491,7 +491,7 @@ DWORD WINAPI RsWcThread(PVOID param)
 			}
 			if (dw == 0)
 			{
-				wprintf(L"[-] [RsWc] socket closed, exiting thread...\n", WSAGetLastError());
+				wprintf(L"[-] [RsWc] socket closed, exiting thread...\n");
 				SetEvent(hEvent_RDP_global);
 				return -1;
 			}
